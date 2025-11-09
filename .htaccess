@@ -1,8 +1,0 @@
-# Always use index.php as the default
-DirectoryIndex index.php
-
-# Optional: Clean URLs (so /admin also works)
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin$ admin.php [L]

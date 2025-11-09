@@ -1,20 +1,14 @@
-# Use official PHP 8.2 image with Apache
+# Use official PHP + Apache image
 FROM php:8.2-apache
 
-# Install MySQL extension for PHP
-RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
+# Enable mysqli extension
+RUN docker-php-ext-install mysqli
 
-# Enable Apache rewrite module
-RUN a2enmod rewrite
-
-# Copy all project files into Apache web directory
+# Copy source code
 COPY . /var/www/html/
 
-# Set working directory
-WORKDIR /var/www/html/
+# Copy our Apache configuration
+COPY apache.conf /etc/apache2/sites-available/000-default.conf
 
-# Expose port 80 to the web
-EXPOSE 80
-
-# Start Apache server
-CMD ["apache2-foreground"]
+# Enable Apache rewrite
+RUN a2enmod rewrite
