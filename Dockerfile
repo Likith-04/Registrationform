@@ -1,14 +1,17 @@
-# Use official PHP + Apache image
+# Use PHP with Apache
 FROM php:8.2-apache
 
-# Enable mysqli extension
+# Enable mysqli
 RUN docker-php-ext-install mysqli
 
-# Copy source code
+# Copy project files into Apache root
 COPY . /var/www/html/
 
-# Copy our Apache configuration
-COPY apache.conf /etc/apache2/sites-available/000-default.conf
+# Ensure index.php loads first
+RUN echo "DirectoryIndex index.php" >> /etc/apache2/apache2.conf
 
-# Enable Apache rewrite
-RUN a2enmod rewrite
+# Expose port
+EXPOSE 80
+
+# Start Apache
+CMD ["apache2-foreground"]
