@@ -1,41 +1,38 @@
 <?php
-// Get database URL from environment variable
+// ✅ Connect using Railway DATABASE_URL if available
 $db_url = getenv("DATABASE_URL");
 
-if (!$db_url) {
-  die("❌ Database URL not found. Please set DATABASE_URL in Railway Variables.");
+if ($db_url) {
+  $db_parts = parse_url($db_url);
+  $servername = $db_parts["host"];
+  $username   = $db_parts["user"];
+  $password   = $db_parts["pass"];
+  $dbname     = ltrim($db_parts["path"], "/");
+  $port       = $db_parts["port"];
+} else {
+  $servername = "localhost";
+  $username = "root";
+  $password = "";
+  $dbname = "regform_db";
+  $port = 3306;
 }
 
-// Parse DATABASE_URL
-$db_parts = parse_url($db_url);
-
-$servername = $db_parts["host"];
-$username   = $db_parts["user"];
-$password   = $db_parts["pass"];
-$dbname     = ltrim($db_parts["path"], "/");
-$port       = $db_parts["port"];
-
-// Connect to MySQL
 $conn = new mysqli($servername, $username, $password, $dbname, $port);
-
-// Check connection
 if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
+  die("<h3 style='color:red; text-align:center;'>Database Connection Failed: " . $conn->connect_error . "</h3>");
 }
-
 
 if (isset($_GET['delete_id'])) {
   $id = intval($_GET['delete_id']);
   $delete_sql = "DELETE FROM registrations WHERE id = $id";
   $conn->query($delete_sql);
-  header("Location: admin.php"); 
+  header("Location: admin.php");
   exit;
 }
 
 $sql = "SELECT * FROM registrations";
 $result = $conn->query($sql);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,7 +52,6 @@ $result = $conn->query($sql);
       background-attachment: fixed;
       color: white;
     }
-
     .container {
       background-color: rgba(0, 0, 0, 0.7);
       width: 90%;
@@ -65,143 +61,66 @@ $result = $conn->query($sql);
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(6px);
     }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 10px;
-      color: #f8f8f8;
-      font-size: 26px;
-    }
-
-    h3 {
-      color: #ccc;
-      margin-left: 20px;
-      margin-bottom: 10px;
-    }
-
+    h2 { text-align: center; color: #f8f8f8; font-size: 26px; }
+    h3 { color: #ccc; margin-left: 20px; }
     table {
-      width: 100%;
-      margin-top: 15px;
-      border-collapse: collapse;
-      background-color: transparent;
-      overflow: hidden;
+      width: 100%; margin-top: 15px; border-collapse: collapse; background-color: transparent;
     }
-
     th, td {
-      padding: 12px;
-      border: 1px solid #ddd;
-      text-align: center;
-      color: white;
+      padding: 12px; border: 1px solid #ddd; text-align: center; color: white;
     }
-
-    th {
-      color: white;
-      font-weight: bold;
-      font-size: 16px;
-      background-color: rgba(80, 80, 80, 0.7);
-    }
-
-    tr:hover {
-      background-color: rgba(120, 120, 120, 0.8);
-    }
-
-    .no-data {
-      text-align: center;
-      color: #ff6666;
-      font-size: 18px;
-      margin-top: 20px;
-    }
-
-    .back-btn {
-      display: inline-block;
-      padding: 10px 20px;
-      margin: 25px auto 0;
-      background-color: rgb(60, 60, 60);
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-      text-align: center;
-      font-weight: bold;
-      transition: 0.3s;
-    }
-
-    .back-btn:hover {
-      background-color: rgb(120, 120, 120);
-      transform: scale(1.10);
-    }
-
+    th { background-color: rgba(80, 80, 80, 0.7); font-weight: bold; }
+    tr:hover { background-color: rgba(120, 120, 120, 0.8); }
     .delete-btn {
       background-color: rgba(100, 100, 100, 0.8);
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.3s;
+      color: white; border: none; padding: 8px 15px; border-radius: 6px;
+      cursor: pointer; transition: 0.3s;
     }
-
-    .delete-btn:hover {
-      background-color: red;
-      transform: scale(1.1);
+    .delete-btn:hover { background-color: red; transform: scale(1.1); }
+    .back-btn {
+      display: inline-block; padding: 10px 20px; margin: 25px auto 0;
+      background-color: rgb(60, 60, 60); color: white;
+      text-decoration: none; border-radius: 6px;
+      font-weight: bold; transition: 0.3s;
     }
-
-    .table-wrapper {
-      overflow-x: auto;
-    }
-
+    .back-btn:hover { background-color: rgb(120, 120, 120); transform: scale(1.10); }
   </style>
 </head>
 <body>
-
   <div class="container">
     <h2><i class="fas fa-user-shield"></i> Admin Dashboard</h2>
     <h3>Registered Users:</h3>
-
     <div class="table-wrapper">
-    <?php
-    if ($result && $result->num_rows > 0) {
-      echo "<table>
-              <tr>
-                <th>ID</th>
-                <th>Full Name</th>
-                <th>USN</th>
-                <th>Gender</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Address</th>
-                <th>Action</th>
-              </tr>";
-
-      while($row = $result->fetch_assoc()) {
-        echo "<tr>
-                <td>".$row['id']."</td>
-                <td>".$row['fullname']."</td>
-                <td>".$row['usn']."</td>
-                <td>".$row['gender']."</td>
-                <td>".$row['email']."</td>
-                <td>".$row['phone']."</td>
-                <td>".$row['address']."</td>
-                <td>
-                  <a href='admin.php?delete_id=".$row['id']."' onclick=\"return confirm('Are you sure you want to delete this record?');\">
-                    <button class='delete-btn'><i class='fas fa-trash'></i> Delete</button>
-                  </a>
-                </td>
-              </tr>";
+      <?php
+      if ($result && $result->num_rows > 0) {
+        echo "<table>
+                <tr>
+                  <th>ID</th><th>Full Name</th><th>USN</th><th>Gender</th>
+                  <th>Email</th><th>Phone</th><th>Address</th><th>Action</th>
+                </tr>";
+        while($row = $result->fetch_assoc()) {
+          echo "<tr>
+                  <td>{$row['id']}</td>
+                  <td>{$row['fullname']}</td>
+                  <td>{$row['usn']}</td>
+                  <td>{$row['gender']}</td>
+                  <td>{$row['email']}</td>
+                  <td>{$row['phone']}</td>
+                  <td>{$row['address']}</td>
+                  <td><a href='admin.php?delete_id={$row['id']}' onclick=\"return confirm('Delete this record?');\">
+                        <button class='delete-btn'><i class='fas fa-trash'></i> Delete</button></a></td>
+                </tr>";
+        }
+        echo "</table>";
+      } else {
+        echo "<p style='text-align:center;color:#ff6666;'>No registrations found.</p>";
       }
-
-      echo "</table>";
-    } else {
-      echo "<p class='no-data'>No registrations found in the database.</p>";
-    }
-
-    $conn->close();
-    ?>
+      $conn->close();
+      ?>
     </div>
-
     <div style='text-align:center;'>
       <a href="index.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Registration</a>
     </div>
   </div>
-
 </body>
 </html>
